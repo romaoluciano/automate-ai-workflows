@@ -80,11 +80,29 @@ export function useAutomationFlow(automationId?: string) {
         .eq("id", id)
         .single();
 
-      if (automation?.json_schema && typeof automation.json_schema === 'object') {
-        const schema = automation.json_schema as { nodes: Node[]; edges: Edge[] };
-        if (Array.isArray(schema.nodes) && Array.isArray(schema.edges)) {
-          setNodes(schema.nodes);
-          setEdges(schema.edges);
+      if (automation?.json_schema) {
+        // Add type checking and safe conversion
+        const schema = automation.json_schema as unknown;
+        
+        // Check if the schema has the expected structure
+        if (
+          typeof schema === 'object' && 
+          schema !== null && 
+          'nodes' in schema && 
+          'edges' in schema && 
+          Array.isArray((schema as any).nodes) && 
+          Array.isArray((schema as any).edges)
+        ) {
+          const typedSchema = schema as { nodes: Node[]; edges: Edge[] };
+          setNodes(typedSchema.nodes);
+          setEdges(typedSchema.edges);
+        } else {
+          console.error("Invalid schema format:", schema);
+          toast({
+            title: "Erro",
+            description: "Formato inválido de automação",
+            variant: "destructive",
+          });
         }
       }
     } catch (error) {
