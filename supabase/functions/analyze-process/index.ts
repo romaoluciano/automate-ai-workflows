@@ -92,7 +92,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       diagnosisId: diagnosisRecord.id,
-      recommendations
+      recommendations: recommendations.recommendations || []
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

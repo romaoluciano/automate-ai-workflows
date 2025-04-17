@@ -24,12 +24,27 @@ const processAreas = [
   { value: "outro", label: "Outro (especifique)" },
 ];
 
+// Define a type for recommendation items
+interface Recommendation {
+  title: string;
+  description: string;
+  benefits: string[];
+  complexity: string;
+  implementationTime: string;
+  timeSavings: string;
+}
+
+// Define a type for the AI recommendations structure
+interface AIRecommendations {
+  recommendations: Recommendation[];
+}
+
 export default function Diagnostico() {
   const [activeTab, setActiveTab] = useState("formulario");
   const [loading, setLoading] = useState(false);
   const [diagnosticoRealizado, setDiagnosticoRealizado] = useState(false);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
-  const [recomendacoes, setRecomendacoes] = useState<any[]>([]);
+  const [recomendacoes, setRecomendacoes] = useState<Recommendation[]>([]);
   const { toast } = useToast();
   
   // Formulário de diagnóstico
@@ -64,9 +79,13 @@ export default function Diagnostico() {
             const diagnosis = data[0];
             setDiagnosisId(diagnosis.id);
             
-            if (diagnosis.ai_recommendations?.recommendations) {
-              setRecomendacoes(diagnosis.ai_recommendations.recommendations);
-              setDiagnosticoRealizado(true);
+            // Type check and transform the AI recommendations
+            if (diagnosis.ai_recommendations) {
+              const aiRecs = diagnosis.ai_recommendations as AIRecommendations;
+              if (aiRecs.recommendations && Array.isArray(aiRecs.recommendations)) {
+                setRecomendacoes(aiRecs.recommendations);
+                setDiagnosticoRealizado(true);
+              }
             }
           }
         }
@@ -119,9 +138,13 @@ export default function Diagnostico() {
       
       // Atualiza o estado com as recomendações
       setDiagnosisId(data.diagnosisId);
-      setRecomendacoes(data.recommendations.recommendations || []);
-      setDiagnosticoRealizado(true);
-      setActiveTab("recomendacoes");
+      
+      // Type check and transform the AI recommendations
+      if (data.recommendations && Array.isArray(data.recommendations)) {
+        setRecomendacoes(data.recommendations);
+        setDiagnosticoRealizado(true);
+        setActiveTab("recomendacoes");
+      }
       
       toast({
         title: "Diagnóstico Concluído",
@@ -140,7 +163,7 @@ export default function Diagnostico() {
     }
   };
 
-  const handleImplementarAutomacao = (recomendacao: any) => {
+  const handleImplementarAutomacao = (recomendacao: Recommendation) => {
     // Esta função será implementada quando integrarmos com o editor de automações
     toast({
       title: "Iniciando Implementação",
