@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { CircleCheckIcon, ClockIcon, CircleDashedIcon } from "lucide-react";
+import { CircleCheckIcon, ClockIcon, CircleDashedIcon, Loader2Icon, SaveIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const processAreas = [
   { value: "vendas", label: "Vendas e CRM" },
@@ -26,6 +28,9 @@ export default function Diagnostico() {
   const [activeTab, setActiveTab] = useState("formulario");
   const [loading, setLoading] = useState(false);
   const [diagnosticoRealizado, setDiagnosticoRealizado] = useState(false);
+  const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
+  const [recomendacoes, setRecomendacoes] = useState<any[]>([]);
+  const { toast } = useToast();
   
   // Formulário de diagnóstico
   const [form, setForm] = useState({
@@ -38,6 +43,41 @@ export default function Diagnostico() {
     desafios: "",
   });
 
+  // Verifica se existem recomendações salvas para o usuário atual
+  useEffect(() => {
+    const fetchSavedDiagnosis = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data, error } = await supabase
+            .from("diagnoses")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("status", "completed")
+            .order("created_at", { ascending: false })
+            .limit(1);
+            
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            const diagnosis = data[0];
+            setDiagnosisId(diagnosis.id);
+            
+            if (diagnosis.ai_recommendations?.recommendations) {
+              setRecomendacoes(diagnosis.ai_recommendations.recommendations);
+              setDiagnosticoRealizado(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar diagnósticos salvos:", error);
+      }
+    };
+    
+    fetchSavedDiagnosis();
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
     setForm({
       ...form,
@@ -45,41 +85,70 @@ export default function Diagnostico() {
     });
   };
 
-  const handleSubmitDiagnostico = () => {
+  const handleSubmitDiagnostico = async () => {
     setLoading(true);
     
-    // Simulando o processamento da IA
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Verifica se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Erro de Autenticação",
+          description: "Você precisa estar logado para realizar um diagnóstico.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
+      toast({
+        title: "Processando",
+        description: "Seu diagnóstico está sendo analisado pela IA. Isso pode levar alguns instantes...",
+      });
+      
+      // Envia os dados para a função edge de análise
+      const { data, error } = await supabase.functions.invoke("analyze-process", {
+        body: {
+          diagnosisData: form,
+          userId: user.id
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Atualiza o estado com as recomendações
+      setDiagnosisId(data.diagnosisId);
+      setRecomendacoes(data.recommendations.recommendations || []);
       setDiagnosticoRealizado(true);
       setActiveTab("recomendacoes");
-    }, 3000);
+      
+      toast({
+        title: "Diagnóstico Concluído",
+        description: "A análise do seu processo foi concluída com sucesso!",
+      });
+      
+    } catch (error) {
+      console.error("Erro ao processar diagnóstico:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao processar seu diagnóstico. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Recomendações simuladas da IA
-  const recomendacoes = [
-    {
-      titulo: "Automação de Envio de Propostas",
-      descricao: "Automatize a geração e envio de propostas comerciais quando novos leads forem qualificados no CRM.",
-      beneficios: ["Redução de 70% no tempo de processamento", "Eliminação de erros manuais", "Aumento na taxa de conversão"],
-      complexidade: "Média",
-      tempoImplementacao: "3-5 dias",
-    },
-    {
-      titulo: "Integração CRM e Email Marketing",
-      descricao: "Sincronize automaticamente novos leads do CRM para a plataforma de email marketing, segmentando por fonte e interesse.",
-      beneficios: ["Comunicação personalizada", "Economia de 5 horas semanais", "Segmentação precisa"],
-      complexidade: "Baixa",
-      tempoImplementacao: "1-2 dias",
-    },
-    {
-      titulo: "Alertas Inteligentes de Follow-up",
-      descricao: "Crie alertas automáticos para a equipe de vendas quando leads não receberem follow-up no prazo adequado.",
-      beneficios: ["Redução na perda de oportunidades", "Melhor experiência do cliente", "Visibilidade do pipeline"],
-      complexidade: "Baixa",
-      tempoImplementacao: "1 dia",
-    },
-  ];
+  const handleImplementarAutomacao = (recomendacao: any) => {
+    // Esta função será implementada quando integrarmos com o editor de automações
+    toast({
+      title: "Iniciando Implementação",
+      description: `Preparando automação: ${recomendacao.title}`,
+    });
+    
+    // No futuro, redirecionar para o editor de automações com template pré-configurado
+  };
 
   return (
     <MainLayout>
@@ -106,7 +175,7 @@ export default function Diagnostico() {
               <CardHeader>
                 <CardTitle>Diagnóstico de Processos</CardTitle>
                 <CardDescription>
-                  Descreva o processo que deseja otimizar para receberemcomendações de automação.
+                  Descreva o processo que deseja otimizar para receber recomendações de automação.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -212,7 +281,14 @@ export default function Diagnostico() {
                   disabled={!form.area || !form.descricaoProcesso || loading}
                   className="bg-primary-500 hover:bg-primary-600"
                 >
-                  {loading ? "Analisando..." : "Analisar com IA"}
+                  {loading ? (
+                    <>
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      Analisando...
+                    </>
+                  ) : (
+                    "Analisar com IA"
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -228,58 +304,75 @@ export default function Diagnostico() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {recomendacoes.map((recomendacao, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium">{recomendacao.titulo}</h3>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {recomendacao.descricao}
-                          </p>
+                  {recomendacoes.length > 0 ? (
+                    recomendacoes.map((recomendacao, index) => (
+                      <div key={index} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="text-lg font-medium">{recomendacao.title}</h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {recomendacao.description}
+                            </p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm">
+                              Ver Detalhes
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              className="bg-primary-500 hover:bg-primary-600"
+                              onClick={() => handleImplementarAutomacao(recomendacao)}
+                            >
+                              Implementar
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            Ver Detalhes
-                          </Button>
-                          <Button size="sm" className="bg-primary-500 hover:bg-primary-600">
-                            Implementar
-                          </Button>
-                        </div>
-                      </div>
 
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium mb-2">Benefícios:</h4>
-                        <ul className="space-y-1">
-                          {recomendacao.beneficios.map((beneficio, i) => (
-                            <li key={i} className="text-sm flex items-center">
-                              <CircleCheckIcon className="h-4 w-4 text-green-500 mr-2" />
-                              {beneficio}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium mb-2">Benefícios:</h4>
+                          <ul className="space-y-1">
+                            {recomendacao.benefits.map((beneficio: string, i: number) => (
+                              <li key={i} className="text-sm flex items-center">
+                                <CircleCheckIcon className="h-4 w-4 text-green-500 mr-2" />
+                                {beneficio}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                      <div className="flex mt-4 space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <CircleDashedIcon className="h-4 w-4 mr-1" />
-                          Complexidade: {recomendacao.complexidade}
-                        </div>
-                        <div className="flex items-center">
-                          <ClockIcon className="h-4 w-4 mr-1" />
-                          Tempo: {recomendacao.tempoImplementacao}
+                        <div className="flex mt-4 space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center">
+                            <CircleDashedIcon className="h-4 w-4 mr-1" />
+                            Complexidade: {recomendacao.complexity}
+                          </div>
+                          <div className="flex items-center">
+                            <ClockIcon className="h-4 w-4 mr-1" />
+                            Tempo: {recomendacao.implementationTime}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10">
+                      <div className="flex justify-center">
+                        <Loader2Icon className="h-10 w-10 text-primary-500 animate-spin" />
+                      </div>
+                      <p className="mt-4 text-lg font-medium">Carregando recomendações...</p>
+                      <p className="text-sm text-gray-500">Aguarde enquanto processamos os resultados</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline" onClick={() => setActiveTab("formulario")}>
                   Voltar ao Diagnóstico
                 </Button>
-                <Button className="bg-primary-500 hover:bg-primary-600">
-                  Implementar Todas
-                </Button>
+                {recomendacoes.length > 0 && (
+                  <Button className="bg-primary-500 hover:bg-primary-600">
+                    <SaveIcon className="mr-2 h-4 w-4" />
+                    Salvar Recomendações
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           </TabsContent>
