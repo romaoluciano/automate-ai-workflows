@@ -80,9 +80,12 @@ export function useAutomationFlow(automationId?: string) {
         .eq("id", id)
         .single();
 
-      if (automation?.json_schema) {
-        setNodes(automation.json_schema.nodes);
-        setEdges(automation.json_schema.edges);
+      if (automation?.json_schema && typeof automation.json_schema === 'object') {
+        const schema = automation.json_schema as { nodes: Node[]; edges: Edge[] };
+        if (Array.isArray(schema.nodes) && Array.isArray(schema.edges)) {
+          setNodes(schema.nodes);
+          setEdges(schema.edges);
+        }
       }
     } catch (error) {
       console.error("Error loading flow:", error);
