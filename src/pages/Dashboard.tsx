@@ -5,6 +5,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { ROIMetrics } from "@/components/dashboard/ROIMetrics";
 import { AutomationsOverview } from "@/components/dashboard/AutomationsOverview";
 import { ExecutionsTable } from "@/components/dashboard/ExecutionsTable";
+import { AlertsList } from "@/components/automation/execution/AlertsList";
 import { 
   ClockIcon, 
   CurrencyDollarIcon, 
@@ -56,6 +57,7 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <ROIMetrics />
           <AutomationsOverview />
+          <AlertsList />
         </div>
 
         <ExecutionsTable />
