@@ -120,6 +120,8 @@ export function useAutomationFlow(automationId?: string) {
   return {
     nodes,
     edges,
+    setNodes,
+    setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,

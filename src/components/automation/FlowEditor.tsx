@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -27,9 +27,20 @@ interface FlowEditorProps {
   automationId?: string;
   name?: string;
   onSave?: () => void;
+  initialTemplate?: {
+    name: string;
+    description: string;
+    nodes: any[];
+    edges: any[];
+  };
 }
 
-export function FlowEditor({ automationId, name = "Nova Automação", onSave }: FlowEditorProps) {
+export function FlowEditor({ 
+  automationId, 
+  name = "Nova Automação", 
+  onSave,
+  initialTemplate 
+}: FlowEditorProps) {
   const {
     nodes,
     edges,
@@ -37,8 +48,26 @@ export function FlowEditor({ automationId, name = "Nova Automação", onSave }: 
     onEdgesChange,
     onConnect,
     saveFlow,
+    loadFlow,
+    setNodes,
+    setEdges,
     isLoading
   } = useAutomationFlow(automationId);
+
+  // Load automation if ID is provided
+  useEffect(() => {
+    if (automationId) {
+      loadFlow(automationId);
+    }
+  }, [automationId, loadFlow]);
+
+  // Load initial template if provided
+  useEffect(() => {
+    if (initialTemplate && initialTemplate.nodes && initialTemplate.edges) {
+      setNodes(initialTemplate.nodes);
+      setEdges(initialTemplate.edges);
+    }
+  }, [initialTemplate, setNodes, setEdges]);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -78,7 +107,7 @@ export function FlowEditor({ automationId, name = "Nova Automação", onSave }: 
   }, []);
 
   const handleSave = async () => {
-    await saveFlow(name);
+    await saveFlow(initialTemplate?.name || name);
     onSave?.();
   };
 
@@ -86,7 +115,7 @@ export function FlowEditor({ automationId, name = "Nova Automação", onSave }: 
     <Card className="h-full">
       <CardHeader className="pb-0">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">{name}</CardTitle>
+          <CardTitle className="text-xl">{initialTemplate?.name || name}</CardTitle>
           <Button 
             className="bg-primary-500 hover:bg-primary-600"
             onClick={handleSave}
