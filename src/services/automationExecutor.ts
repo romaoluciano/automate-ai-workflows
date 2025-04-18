@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { NodeData } from "@/components/automation/editor/nodes/nodeTypes";
+import { Json } from "@/integrations/supabase/types";
 
 // Type definitions
 export interface ExecutionResult {
@@ -26,6 +27,11 @@ export interface ExecutionOptions {
   automationId: string;
   userId?: string;
   inputData?: Record<string, any>;
+}
+
+// Helper function to convert a normal object to a Json compatible type
+function toJsonCompatible<T>(obj: T): Json {
+  return JSON.parse(JSON.stringify(obj));
 }
 
 // Main executor class
@@ -68,9 +74,16 @@ export class AutomationExecutor {
         return false;
       }
 
-      // Extract nodes and edges from the JSON schema
-      this.nodes = automation.json_schema.nodes || [];
-      this.edges = automation.json_schema.edges || [];
+      // Check if json_schema is an object and has nodes and edges properties
+      const schema = automation.json_schema as any;
+      if (typeof schema === 'object' && schema !== null && 'nodes' in schema && 'edges' in schema) {
+        // Extract nodes and edges from the JSON schema
+        this.nodes = schema.nodes || [];
+        this.edges = schema.edges || [];
+      } else {
+        this.log("error", "Invalid automation schema format");
+        return false;
+      }
 
       this.log("info", `Loaded automation: ${automation.name}`);
       return true;
@@ -83,19 +96,21 @@ export class AutomationExecutor {
   // Create a record of the execution in the database
   private async createExecutionRecord(status: "running" | "success" | "failed"): Promise<string | null> {
     try {
+      const executionData = {
+        automation_id: this.automationId,
+        status,
+        started_at: this.startTime.toISOString(),
+        finished_at: status !== "running" ? new Date().toISOString() : null,
+        duration_ms: status !== "running" ? new Date().getTime() - this.startTime.getTime() : null,
+        result: toJsonCompatible({
+          logs: this.logs,
+          output: status === "success" ? this.prepareOutput() : null
+        })
+      };
+
       const { data, error } = await supabase
         .from("executions")
-        .insert({
-          automation_id: this.automationId,
-          status,
-          started_at: this.startTime.toISOString(),
-          finished_at: status !== "running" ? new Date().toISOString() : null,
-          duration_ms: status !== "running" ? new Date().getTime() - this.startTime.getTime() : null,
-          result: {
-            logs: this.logs,
-            output: status === "success" ? this.prepareOutput() : null
-          }
-        })
+        .insert(executionData)
         .select("id")
         .single();
 
@@ -125,10 +140,10 @@ export class AutomationExecutor {
           status,
           finished_at: endTime.toISOString(),
           duration_ms: duration,
-          result: {
+          result: toJsonCompatible({
             logs: this.logs,
             output: status === "success" ? this.prepareOutput() : null
-          }
+          })
         })
         .eq("id", this.executionId);
 
