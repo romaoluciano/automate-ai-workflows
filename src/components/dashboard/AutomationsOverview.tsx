@@ -2,6 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 
 const data = [
   { name: "Ativas", value: 18 },
@@ -9,7 +10,20 @@ const data = [
   { name: "Rascunhos", value: 8 },
 ];
 
-const COLORS = ["#8b5cf6", "#f59e0b", "#d1d5db"];
+const chartConfig = {
+  Ativas: {
+    label: "Ativas",
+    color: "#8b5cf6",
+  },
+  Pausadas: {
+    label: "Pausadas",
+    color: "#f59e0b",
+  },
+  Rascunhos: {
+    label: "Rascunhos",
+    color: "#d1d5db",
+  },
+};
 
 export function AutomationsOverview() {
   return (
@@ -18,7 +32,7 @@ export function AutomationsOverview() {
         <CardTitle className="text-lg">Automações</CardTitle>
       </CardHeader>
       <CardContent className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
+        <ChartContainer config={chartConfig}>
           <PieChart>
             <Pie
               data={data}
@@ -26,18 +40,22 @@ export function AutomationsOverview() {
               cy="50%"
               labelLine={false}
               outerRadius={80}
-              fill="#8884d8"
               dataKey="value"
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={`var(--color-${entry.name})`} 
+                />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => [`${value} automações`, ""]} />
+            <Tooltip 
+              formatter={(value) => [`${value} automações`, ""]} 
+            />
             <Legend />
           </PieChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

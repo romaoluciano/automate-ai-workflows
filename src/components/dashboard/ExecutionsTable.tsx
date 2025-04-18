@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { 
   Table, 
   TableBody, 
@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EyeIcon, RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ExecutionDetails } from "@/components/automation/execution/ExecutionDetails";
 
 // Dados simulados de execuções
 const executions = [
@@ -51,6 +55,17 @@ const executions = [
 ];
 
 export function ExecutionsTable() {
+  const [selectedExecution, setSelectedExecution] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Simular uma atualização da tabela
+  const refreshData = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+  };
+
   // Função para formatar o status
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -66,32 +81,70 @@ export function ExecutionsTable() {
   };
 
   return (
-    <Card className="col-span-2">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Últimas Execuções</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Automação</TableHead>
-              <TableHead>Horário</TableHead>
-              <TableHead>Duração</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {executions.map((execution) => (
-              <TableRow key={execution.id}>
-                <TableCell className="font-medium">{execution.automationName}</TableCell>
-                <TableCell>{execution.startTime}</TableCell>
-                <TableCell>{execution.duration}s</TableCell>
-                <TableCell>{getStatusBadge(execution.status)}</TableCell>
+    <>
+      <Card className="col-span-2">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">Últimas Execuções</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshData} 
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Automação</TableHead>
+                <TableHead>Horário</TableHead>
+                <TableHead>Duração</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {executions.map((execution) => (
+                <TableRow key={execution.id}>
+                  <TableCell className="font-medium">{execution.automationName}</TableCell>
+                  <TableCell>{execution.startTime}</TableCell>
+                  <TableCell>{execution.duration}s</TableCell>
+                  <TableCell>{getStatusBadge(execution.status)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setSelectedExecution({
+                        ...execution,
+                        logs: [],
+                        output: { result: "Detalhes da execução" },
+                        startTime: execution.startTime,
+                        endTime: new Date().toISOString(),
+                        duration: execution.duration * 1000
+                      })}
+                    >
+                      <EyeIcon className="h-4 w-4 mr-2" />
+                      Detalhes
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!selectedExecution} onOpenChange={(open) => !open && setSelectedExecution(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Execução</DialogTitle>
+          </DialogHeader>
+          {selectedExecution && <ExecutionDetails execution={selectedExecution} />}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
