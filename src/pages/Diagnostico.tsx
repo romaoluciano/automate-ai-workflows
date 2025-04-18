@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -79,11 +78,17 @@ export default function Diagnostico() {
             const diagnosis = data[0];
             setDiagnosisId(diagnosis.id);
             
-            // Type check and transform the AI recommendations
-            if (diagnosis.ai_recommendations) {
-              const aiRecs = diagnosis.ai_recommendations as AIRecommendations;
-              if (aiRecs.recommendations && Array.isArray(aiRecs.recommendations)) {
-                setRecomendacoes(aiRecs.recommendations);
+            // Type check and transform the AI recommendations properly
+            if (diagnosis.ai_recommendations && typeof diagnosis.ai_recommendations === 'object') {
+              // First cast to unknown then to our type for safety
+              const aiRecs = diagnosis.ai_recommendations as unknown;
+              
+              // Check if it has the expected structure
+              if (aiRecs && 
+                  typeof aiRecs === 'object' && 
+                  'recommendations' in aiRecs && 
+                  Array.isArray((aiRecs as AIRecommendations).recommendations)) {
+                setRecomendacoes((aiRecs as AIRecommendations).recommendations);
                 setDiagnosticoRealizado(true);
               }
             }
@@ -139,7 +144,7 @@ export default function Diagnostico() {
       // Atualiza o estado com as recomendações
       setDiagnosisId(data.diagnosisId);
       
-      // Type check and transform the AI recommendations
+      // Type check and transform the AI recommendations properly
       if (data.recommendations && Array.isArray(data.recommendations)) {
         setRecomendacoes(data.recommendations);
         setDiagnosticoRealizado(true);
