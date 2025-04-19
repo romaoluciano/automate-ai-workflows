@@ -35,7 +35,7 @@ const formSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   description: z.string().min(10, "Descrição deve ter pelo menos 10 caracteres"),
   category: z.string().min(1, "Selecione uma categoria"),
-  tags: z.string().transform(str => str.split(",").map(s => s.trim())).optional(),
+  tags: z.string().transform(str => str.split(",").map(s => s.trim())),
 });
 
 interface TemplateSubmissionFormProps {
@@ -64,7 +64,7 @@ export function TemplateSubmissionForm({ isOpen, onClose, categories }: Template
           name: values.name,
           description: values.description,
           category: values.category,
-          tags: values.tags || [], // Ensure tags is always an array
+          tags: values.tags, // This is now transformed to string[] by Zod
           json_schema: {},
           is_premium: false,
         });
