@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { CircleCheckIcon, ClockIcon, CircleDashedIcon, InfoIcon } from "lucide-react";
+import { CircleCheckIcon, ClockIcon, CircleDashedIcon, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Recommendation {
@@ -30,10 +30,10 @@ export const RecomendacaoCard: React.FC<RecomendacaoCardProps> = ({
   };
 
   const handleCriarAutomacao = () => {
-    // Perform the implementation action
+    // First call the onImplementar callback
     onImplementar(recomendacao);
     
-    // Navigate to the automation editor
+    // Navigate to the automation editor with recommendation data
     navigate('/automacoes', { 
       state: { 
         createFromRecommendation: true,
@@ -64,6 +64,7 @@ export const RecomendacaoCard: React.FC<RecomendacaoCardProps> = ({
             className="bg-primary-500 hover:bg-primary-600"
             onClick={handleCriarAutomacao}
           >
+            <Zap className="mr-2 h-4 w-4" />
             Implementar
           </Button>
         </div>
