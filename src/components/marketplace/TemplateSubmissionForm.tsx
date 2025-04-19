@@ -1,4 +1,3 @@
-
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -50,13 +49,15 @@ interface TemplateSubmissionFormProps {
 
 export function TemplateSubmissionForm({ isOpen, onClose, categories }: TemplateSubmissionFormProps) {
   const { toast } = useToast();
+  
+  // Use the correct type for tags from the Zod schema
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
       category: "",
-      tags: "",
+      tags: "", // This is a string input initially
     },
   });
 
