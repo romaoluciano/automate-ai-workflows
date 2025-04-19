@@ -1,3 +1,4 @@
+
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -39,7 +40,17 @@ const formSchema = z.object({
 });
 
 // Define proper types for the form values
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema> & {
+  tags: string; // Override the inferred type for the input
+};
+
+// Type for the processed form values after Zod transformation
+type ProcessedFormValues = {
+  name: string;
+  description: string;
+  category: string;
+  tags: string[]; // This is the transformed type
+};
 
 interface TemplateSubmissionFormProps {
   isOpen: boolean;
@@ -50,7 +61,6 @@ interface TemplateSubmissionFormProps {
 export function TemplateSubmissionForm({ isOpen, onClose, categories }: TemplateSubmissionFormProps) {
   const { toast } = useToast();
   
-  // Use the correct type for tags from the Zod schema
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,14 +73,19 @@ export function TemplateSubmissionForm({ isOpen, onClose, categories }: Template
 
   const onSubmit = async (values: FormValues) => {
     try {
-      // The type system now correctly understands that values.tags is a string[] after transformation
+      // The transformation happens in Zod, so we need to manually apply it here
+      const transformedValues: ProcessedFormValues = {
+        ...values,
+        tags: values.tags.split(",").map((tag) => tag.trim()), // Convert to array
+      };
+
       const { error } = await supabase
         .from("automation_templates")
         .insert({
-          name: values.name,
-          description: values.description,
-          category: values.category,
-          tags: values.tags, // This is now correctly typed as string[]
+          name: transformedValues.name,
+          description: transformedValues.description,
+          category: transformedValues.category,
+          tags: transformedValues.tags, // Now correctly typed as string[]
           json_schema: {},
           is_premium: false,
         });
