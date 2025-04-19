@@ -64,7 +64,7 @@ export function TemplateSubmissionForm({ isOpen, onClose, categories }: Template
           name: values.name,
           description: values.description,
           category: values.category,
-          tags: values.tags,
+          tags: values.tags || [], // Ensure tags is always an array
           json_schema: {},
           is_premium: false,
         });
