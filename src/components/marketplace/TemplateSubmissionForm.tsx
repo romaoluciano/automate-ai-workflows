@@ -40,8 +40,11 @@ const formSchema = z.object({
 });
 
 // Define proper types for the form values
-type FormValues = z.infer<typeof formSchema> & {
-  tags: string; // Override the inferred type for the input
+type FormValues = {
+  name: string;
+  description: string;
+  category: string;
+  tags: string; // Keep as string for form input
 };
 
 // Type for the processed form values after Zod transformation
@@ -73,9 +76,11 @@ export function TemplateSubmissionForm({ isOpen, onClose, categories }: Template
 
   const onSubmit = async (values: FormValues) => {
     try {
-      // The transformation happens in Zod, so we need to manually apply it here
+      // Create a properly typed object with all required fields explicitly defined
       const transformedValues: ProcessedFormValues = {
-        ...values,
+        name: values.name,
+        description: values.description,
+        category: values.category,
         tags: values.tags.split(",").map((tag) => tag.trim()), // Convert to array
       };
 
