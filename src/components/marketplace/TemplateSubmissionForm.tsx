@@ -31,12 +31,16 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define the schema with proper typing
 const formSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   description: z.string().min(10, "Descrição deve ter pelo menos 10 caracteres"),
   category: z.string().min(1, "Selecione uma categoria"),
-  tags: z.string().transform(str => str.split(",").map(s => s.trim())),
+  tags: z.string().transform((str) => str.split(",").map((s) => s.trim())),
 });
+
+// Define proper types for the form values
+type FormValues = z.infer<typeof formSchema>;
 
 interface TemplateSubmissionFormProps {
   isOpen: boolean;
@@ -46,7 +50,7 @@ interface TemplateSubmissionFormProps {
 
 export function TemplateSubmissionForm({ isOpen, onClose, categories }: TemplateSubmissionFormProps) {
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -56,15 +60,16 @@ export function TemplateSubmissionForm({ isOpen, onClose, categories }: Template
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     try {
+      // TypeScript now knows that values.tags is string[] due to the transform
       const { error } = await supabase
         .from("automation_templates")
         .insert({
           name: values.name,
           description: values.description,
           category: values.category,
-          tags: values.tags, // This is now transformed to string[] by Zod
+          tags: values.tags, // This is now correctly typed as string[]
           json_schema: {},
           is_premium: false,
         });
