@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowPathIcon, 
-  StarIcon,
-  TagIcon,
-  BoltIcon,
-  UserGroupIcon,
-  PlusIcon
-} from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import { SearchBar } from "@/components/marketplace/SearchBar";
+import { CategoryFilter } from "@/components/marketplace/CategoryFilter";
+import { TemplateGrid } from "@/components/marketplace/TemplateGrid";
 import { TemplateDetailModal } from "@/components/marketplace/TemplateDetailModal";
 import { TemplateSubmissionForm } from "@/components/marketplace/TemplateSubmissionForm";
 
@@ -108,16 +101,13 @@ export default function Marketplace() {
 
   // Filtrar templates
   const filteredTemplates = templates.filter((template) => {
-    // Filtro de busca
     const matchesSearch = 
       template.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.tags.some(tag => tag.includes(searchTerm.toLowerCase()));
     
-    // Filtro de categoria
     const matchesCategoria = categoriaAtiva === "Todas" || template.categoria === categoriaAtiva;
     
-    // Filtro de tab
     const matchesTab = 
       filtroTab === "todos" || 
       (filtroTab === "gratuitos" && !template.premium) ||
@@ -143,12 +133,7 @@ export default function Marketplace() {
         </div>
 
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-          <Input
-            placeholder="Buscar templates..."
-            className="max-w-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <SearchBar value={searchTerm} onChange={setSearchTerm} />
           
           <Tabs value={filtroTab} onValueChange={setFiltroTab}>
             <TabsList>
@@ -159,87 +144,19 @@ export default function Marketplace() {
           </Tabs>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {categorias.map((categoria) => (
-            <Button
-              key={categoria}
-              variant={categoria === categoriaAtiva ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCategoriaAtiva(categoria)}
-            >
-              {categoria}
-            </Button>
-          ))}
-        </div>
+        <CategoryFilter
+          categories={categorias}
+          activeCategory={categoriaAtiva}
+          onCategoryChange={setCategoriaAtiva}
+        />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTemplates.map((template) => (
-            <Card key={template.id} className="overflow-hidden flex flex-col">
-              <CardHeader className="p-4 pb-0">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">
-                    {template.nome}
-                    {template.premium && (
-                      <Badge className="ml-2 bg-yellow-500">Premium</Badge>
-                    )}
-                  </CardTitle>
-                  <span className="flex items-center text-yellow-500">
-                    <StarIcon className="h-4 w-4 mr-1" />
-                    {template.avaliacao}
-                  </span>
-                </div>
-                <CardDescription className="mt-1 line-clamp-2">
-                  {template.descricao}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 flex-grow">
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {template.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="bg-gray-100">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-                
-                <div className="flex flex-col space-y-2 mt-4 text-sm text-gray-500">
-                  <div className="flex items-center">
-                    <TagIcon className="h-4 w-4 mr-2" />
-                    <span>Categoria: {template.categoria}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <UserGroupIcon className="h-4 w-4 mr-2" />
-                    <span>Autor: {template.autor}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <BoltIcon className="h-4 w-4 mr-2" />
-                    <span>{template.instalacoes} instalações</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="border-t bg-gray-50 p-4">
-                <Button 
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedTemplate(template);
-                    setIsDetailModalOpen(true);
-                  }}
-                >
-                  <ArrowPathIcon className="h-4 w-4 mr-2" />
-                  Ver Detalhes
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-
-          {filteredTemplates.length === 0 && (
-            <div className="col-span-3 text-center py-12">
-              <p className="text-lg font-medium">Nenhum template encontrado</p>
-              <p className="text-muted-foreground">
-                Tente ajustar seus filtros de busca.
-              </p>
-            </div>
-          )}
-        </div>
+        <TemplateGrid
+          templates={filteredTemplates}
+          onTemplateSelect={(template) => {
+            setSelectedTemplate(template);
+            setIsDetailModalOpen(true);
+          }}
+        />
       </div>
 
       <TemplateDetailModal
@@ -254,7 +171,7 @@ export default function Marketplace() {
       <TemplateSubmissionForm
         isOpen={isSubmissionFormOpen}
         onClose={() => setIsSubmissionFormOpen(false)}
-        categories={categorias}
+        categories={categorias.filter(cat => cat !== "Todas")}
       />
     </MainLayout>
   );
