@@ -11,24 +11,24 @@ import {
   ResponsiveContainer, 
   Legend 
 } from "recharts";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const monthlyData = [
-  { name: "Jan", horasPoupadas: 120, custoPoupado: 4800 },
-  { name: "Fev", horasPoupadas: 150, custoPoupado: 6000 },
-  { name: "Mar", horasPoupadas: 200, custoPoupado: 8000 },
-  { name: "Abr", horasPoupadas: 250, custoPoupado: 10000 },
-  { name: "Mai", horasPoupadas: 320, custoPoupado: 12800 },
-  { name: "Jun", horasPoupadas: 380, custoPoupado: 15200 },
+  { name: "Jan", horasPoupadas: 120, custoPoupado: 4800, roi: 380 },
+  { name: "Fev", horasPoupadas: 150, custoPoupado: 6000, roi: 400 },
+  { name: "Mar", horasPoupadas: 200, custoPoupado: 8000, roi: 420 },
+  { name: "Abr", horasPoupadas: 250, custoPoupado: 10000, roi: 450 },
+  { name: "Mai", horasPoupadas: 320, custoPoupado: 12800, roi: 460 },
+  { name: "Jun", horasPoupadas: 380, custoPoupado: 15200, roi: 480 },
 ];
 
 const weeklyData = [
-  { name: "Seg", horasPoupadas: 28, custoPoupado: 1120 },
-  { name: "Ter", horasPoupadas: 32, custoPoupado: 1280 },
-  { name: "Qua", horasPoupadas: 35, custoPoupado: 1400 },
-  { name: "Qui", horasPoupadas: 30, custoPoupado: 1200 },
-  { name: "Sex", horasPoupadas: 40, custoPoupado: 1600 },
+  { name: "Seg", horasPoupadas: 28, custoPoupado: 1120, roi: 380 },
+  { name: "Ter", horasPoupadas: 32, custoPoupado: 1280, roi: 385 },
+  { name: "Qua", horasPoupadas: 35, custoPoupado: 1400, roi: 390 },
+  { name: "Qui", horasPoupadas: 30, custoPoupado: 1200, roi: 375 },
+  { name: "Sex", horasPoupadas: 40, custoPoupado: 1600, roi: 395 },
 ];
 
 const chartConfig = {
@@ -40,6 +40,10 @@ const chartConfig = {
     label: "Custo Poupado (R$)",
     color: "#6d28d9",
   },
+  roi: {
+    label: "ROI (%)",
+    color: "#22c55e",
+  }
 };
 
 export function ROIMetrics() {
@@ -62,7 +66,14 @@ export function ROIMetrics() {
                 <XAxis dataKey="name" />
                 <YAxis yAxisId="left" orientation="left" />
                 <YAxis yAxisId="right" orientation="right" />
-                <Tooltip content={<CustomTooltip />} />
+                <YAxis yAxisId="roi" orientation="right" tickFormatter={(value) => `${value}%`} />
+                <Tooltip 
+                  formatter={(value, name) => {
+                    if (name === "roi") return [`${value}%`, "ROI"];
+                    if (name === "custoPoupado") return [`R$ ${value}`, "Custo Poupado"];
+                    return [`${value}h`, "Horas Poupadas"];
+                  }}
+                />
                 <Legend />
                 <Bar 
                   yAxisId="left" 
@@ -73,8 +84,14 @@ export function ROIMetrics() {
                 <Bar 
                   yAxisId="right" 
                   dataKey="custoPoupado" 
-                  name="Custo Poupado (R$)" 
+                  name="Custo Poupado" 
                   fill="var(--color-custoPoupado)"
+                />
+                <Bar 
+                  yAxisId="roi" 
+                  dataKey="roi" 
+                  name="ROI" 
+                  fill="var(--color-roi)"
                 />
               </BarChart>
             </ChartContainer>
@@ -87,7 +104,14 @@ export function ROIMetrics() {
                 <XAxis dataKey="name" />
                 <YAxis yAxisId="left" orientation="left" />
                 <YAxis yAxisId="right" orientation="right" />
-                <Tooltip content={<CustomTooltip />} />
+                <YAxis yAxisId="roi" orientation="right" tickFormatter={(value) => `${value}%`} />
+                <Tooltip 
+                  formatter={(value, name) => {
+                    if (name === "roi") return [`${value}%`, "ROI"];
+                    if (name === "custoPoupado") return [`R$ ${value}`, "Custo Poupado"];
+                    return [`${value}h`, "Horas Poupadas"];
+                  }}
+                />
                 <Legend />
                 <Bar 
                   yAxisId="left" 
@@ -98,8 +122,14 @@ export function ROIMetrics() {
                 <Bar 
                   yAxisId="right" 
                   dataKey="custoPoupado" 
-                  name="Custo Poupado (R$)" 
+                  name="Custo Poupado" 
                   fill="var(--color-custoPoupado)"
+                />
+                <Bar 
+                  yAxisId="roi" 
+                  dataKey="roi" 
+                  name="ROI" 
+                  fill="var(--color-roi)"
                 />
               </BarChart>
             </ChartContainer>
@@ -107,35 +137,5 @@ export function ROIMetrics() {
         </Tabs>
       </CardContent>
     </Card>
-  );
-}
-
-// Custom tooltip component
-function CustomTooltip({ active, payload }: any) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-
-  return (
-    <div className="rounded-lg border bg-background p-2 shadow-sm">
-      <div className="grid gap-2">
-        {payload.map((item: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1">
-              <div 
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-sm font-medium">
-                {item.name === "horasPoupadas" ? "Horas Poupadas" : "Custo Poupado"}:
-              </span>
-            </div>
-            <span className="text-sm font-medium">
-              {item.name === "custoPoupado" ? `R$ ${item.value}` : `${item.value} horas`}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }

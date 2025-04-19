@@ -11,8 +11,25 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { EyeIcon, RefreshCw } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  EyeIcon, 
+  RefreshCw, 
+  CalendarIcon, 
+  FilterIcon 
+} from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ExecutionDetails } from "@/components/automation/execution/ExecutionDetails";
 
 // Dados simulados de execuções
@@ -57,6 +74,7 @@ const executions = [
 export function ExecutionsTable() {
   const [selectedExecution, setSelectedExecution] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [period, setPeriod] = useState("today");
 
   // Simular uma atualização da tabela
   const refreshData = () => {
@@ -64,6 +82,15 @@ export function ExecutionsTable() {
     setTimeout(() => {
       setIsLoading(false);
     }, 800);
+  };
+
+  // Format timestamp based on period
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    if (period === "today") {
+      return date.toLocaleTimeString();
+    }
+    return date.toLocaleString();
   };
 
   // Função para formatar o status
@@ -85,15 +112,32 @@ export function ExecutionsTable() {
       <Card className="col-span-2">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Últimas Execuções</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={refreshData} 
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select 
+              value={period} 
+              onValueChange={setPeriod}
+            >
+              <SelectTrigger className="w-[150px]">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Selecione o período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="week">Esta semana</SelectItem>
+                <SelectItem value="month">Este mês</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshData} 
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -110,7 +154,7 @@ export function ExecutionsTable() {
               {executions.map((execution) => (
                 <TableRow key={execution.id}>
                   <TableCell className="font-medium">{execution.automationName}</TableCell>
-                  <TableCell>{execution.startTime}</TableCell>
+                  <TableCell>{formatTimestamp(execution.startTime)}</TableCell>
                   <TableCell>{execution.duration}s</TableCell>
                   <TableCell>{getStatusBadge(execution.status)}</TableCell>
                   <TableCell className="text-right">
