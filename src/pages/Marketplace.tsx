@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -8,13 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowPathIcon, 
-  DocumentDuplicateIcon, 
   StarIcon,
   TagIcon,
   BoltIcon,
-  ClockIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  PlusIcon
 } from "@heroicons/react/24/outline";
+import { TemplateDetailModal } from "@/components/marketplace/TemplateDetailModal";
+import { TemplateSubmissionForm } from "@/components/marketplace/TemplateSubmissionForm";
 
 // Templates simulados
 const templates = [
@@ -102,6 +102,9 @@ export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaAtiva, setCategoriaAtiva] = useState("Todas");
   const [filtroTab, setFiltroTab] = useState("todos");
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isSubmissionFormOpen, setIsSubmissionFormOpen] = useState(false);
 
   // Filtrar templates
   const filteredTemplates = templates.filter((template) => {
@@ -126,11 +129,17 @@ export default function Marketplace() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
-          <p className="text-muted-foreground">
-            Descubra e implemente templates de automação pré-construídos.
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
+            <p className="text-muted-foreground">
+              Descubra e implemente templates de automação pré-construídos.
+            </p>
+          </div>
+          <Button onClick={() => setIsSubmissionFormOpen(true)}>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Submeter Template
+          </Button>
         </div>
 
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
@@ -157,7 +166,6 @@ export default function Marketplace() {
               variant={categoria === categoriaAtiva ? "default" : "outline"}
               size="sm"
               onClick={() => setCategoriaAtiva(categoria)}
-              className={categoria === categoriaAtiva ? "bg-primary-500 hover:bg-primary-600" : ""}
             >
               {categoria}
             </Button>
@@ -208,14 +216,16 @@ export default function Marketplace() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="border-t bg-gray-50 p-4 flex justify-between">
-                <Button variant="outline" size="sm">
-                  <ArrowPathIcon className="h-4 w-4 mr-1" />
+              <CardFooter className="border-t bg-gray-50 p-4">
+                <Button 
+                  className="w-full"
+                  onClick={() => {
+                    setSelectedTemplate(template);
+                    setIsDetailModalOpen(true);
+                  }}
+                >
+                  <ArrowPathIcon className="h-4 w-4 mr-2" />
                   Ver Detalhes
-                </Button>
-                <Button className="bg-primary-500 hover:bg-primary-600" size="sm">
-                  <DocumentDuplicateIcon className="h-4 w-4 mr-1" />
-                  Usar Template
                 </Button>
               </CardFooter>
             </Card>
@@ -231,6 +241,21 @@ export default function Marketplace() {
           )}
         </div>
       </div>
+
+      <TemplateDetailModal
+        template={selectedTemplate}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedTemplate(null);
+        }}
+      />
+
+      <TemplateSubmissionForm
+        isOpen={isSubmissionFormOpen}
+        onClose={() => setIsSubmissionFormOpen(false)}
+        categories={categorias}
+      />
     </MainLayout>
   );
 }
