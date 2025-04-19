@@ -62,14 +62,16 @@ export function TemplateSubmissionForm({ isOpen, onClose, categories }: Template
 
   const onSubmit = async (values: FormValues) => {
     try {
-      // TypeScript now knows that values.tags is string[] due to the transform
+      // Transform the tags string to an array before sending to Supabase
+      const tagsArray = values.tags;
+      
       const { error } = await supabase
         .from("automation_templates")
         .insert({
           name: values.name,
           description: values.description,
           category: values.category,
-          tags: values.tags, // This is now correctly typed as string[]
+          tags: tagsArray, // Use the parsed array
           json_schema: {},
           is_premium: false,
         });
