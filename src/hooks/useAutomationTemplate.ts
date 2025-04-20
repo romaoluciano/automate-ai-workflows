@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +14,7 @@ export function useAutomationTemplate() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [automationTemplate, setAutomationTemplate] = useState<any>(null);
   
   const createAutomationTemplateFromRecommendation = (recommendation: any) => {
     const complexity = recommendation.complexity || "Média";
@@ -82,9 +83,11 @@ export function useAutomationTemplate() {
         description: `Criando automação baseada na recomendação: ${recommendation.title}`,
       });
 
-      return createAutomationTemplateFromRecommendation(recommendation);
+      // Generate the template and set it in state instead of returning it
+      const template = createAutomationTemplateFromRecommendation(recommendation);
+      setAutomationTemplate(template);
     }
   }, [location, navigate, toast]);
 
-  return { createAutomationTemplateFromRecommendation };
+  return { createAutomationTemplateFromRecommendation, automationTemplate };
 }

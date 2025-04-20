@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -46,26 +47,22 @@ export default function Automacoes() {
   const [activeTab, setActiveTab] = useState("minhas");
   const [showEditor, setShowEditor] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<string | null>(null);
-  const [automationTemplate, setAutomationTemplate] = useState<any>(null);
   
-  const { createAutomationTemplateFromRecommendation } = useAutomationTemplate();
+  const { automationTemplate } = useAutomationTemplate();
 
   const handleNovaAutomacao = () => {
     setSelectedAutomation(null);
-    setAutomationTemplate(null);
     setShowEditor(true);
   };
 
   const handleEditarAutomacao = (id: string) => {
     setSelectedAutomation(id);
-    setAutomationTemplate(null);
     setShowEditor(true);
   };
 
   const handleVoltarLista = () => {
     setShowEditor(false);
     setSelectedAutomation(null);
-    setAutomationTemplate(null);
   };
 
   return (
