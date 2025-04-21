@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StarIcon, TagIcon, UserGroupIcon, BoltIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { StarIcon, TagIcon, UserGroupIcon, BoltIcon, ArrowPathIcon, UserIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
 
 interface TemplateCardProps {
   template: {
@@ -16,6 +16,9 @@ interface TemplateCardProps {
     autor: string;
     premium: boolean;
     tags: string[];
+    version?: string;
+    preco?: number;
+    autorId?: string;
   };
   onViewDetails: () => void;
 }
@@ -55,13 +58,24 @@ export function TemplateCard({ template, onViewDetails }: TemplateCardProps) {
             <span>Categoria: {template.categoria}</span>
           </div>
           <div className="flex items-center">
-            <UserGroupIcon className="h-4 w-4 mr-2" />
+            <UserIcon className="h-4 w-4 mr-2" />
             <span>Autor: {template.autor}</span>
           </div>
           <div className="flex items-center">
             <BoltIcon className="h-4 w-4 mr-2" />
             <span>{template.instalacoes} instalações</span>
           </div>
+          {template.version && (
+            <div className="flex items-center">
+              <CodeBracketIcon className="h-4 w-4 mr-2" />
+              <span>Versão: {template.version}</span>
+            </div>
+          )}
+          {template.premium && template.preco !== undefined && (
+            <div className="mt-2 font-medium text-base text-primary-700">
+              R$ {template.preco.toFixed(2)}
+            </div>
+          )}
         </div>
       </CardContent>
       <CardFooter className="border-t bg-gray-50 p-4">
