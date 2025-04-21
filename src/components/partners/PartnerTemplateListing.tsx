@@ -44,6 +44,7 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
       
       try {
         setIsLoading(true);
+        
         // Use type safe queries with proper error handling
         const { data, error } = await supabase
           .from("automation_templates")
@@ -53,15 +54,14 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
             description, 
             category, 
             is_premium, 
-            version, 
             created_at
           `)
           .eq("created_by_user", partnerId);
           
         if (error) {
-          console.error("Erro ao carregar templates:", error);
+          console.error("Error loading templates:", error);
           toast({
-            title: "Erro ao carregar templates",
+            title: "Error loading templates",
             description: error.message,
             variant: "destructive",
           });
@@ -78,9 +78,9 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
             category: item.category,
             is_premium: item.is_premium || false,
             status: "published", // Add status manually since it might not be in the table
-            version: item.version || "1.0.0",
+            version: "1.0.0",    // Add version manually since it might not be in the table
             created_at: item.created_at || new Date().toISOString(),
-            installs: Math.floor(Math.random() * 100) // valor simulado para demonstração
+            installs: Math.floor(Math.random() * 100) // simulated value for demonstration
           }));
           
           setTemplates(formattedTemplates);
@@ -88,10 +88,10 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
           setTemplates([]);
         }
       } catch (error) {
-        console.error("Erro ao carregar templates:", error);
+        console.error("Error loading templates:", error);
         toast({
-          title: "Erro ao carregar templates",
-          description: "Não foi possível carregar seus templates.",
+          title: "Error loading templates",
+          description: "Could not load your templates.",
           variant: "destructive",
         });
         setTemplates([]);
@@ -106,13 +106,13 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "published":
-        return <Badge className="bg-green-500">Publicado</Badge>;
+        return <Badge className="bg-green-500">Published</Badge>;
       case "pending":
-        return <Badge className="bg-yellow-500">Em Análise</Badge>;
+        return <Badge className="bg-yellow-500">Under Review</Badge>;
       case "rejected":
-        return <Badge className="bg-red-500">Rejeitado</Badge>;
+        return <Badge className="bg-red-500">Rejected</Badge>;
       case "draft":
-        return <Badge className="bg-gray-500">Rascunho</Badge>;
+        return <Badge className="bg-gray-500">Draft</Badge>;
       default:
         return <Badge className="bg-gray-500">{status}</Badge>;
     }
@@ -134,13 +134,13 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
   if (templates.length === 0) {
     return (
       <div className="bg-white rounded-lg p-6 border text-center">
-        <h3 className="text-lg font-medium mb-4">Nenhum Template Encontrado</h3>
+        <h3 className="text-lg font-medium mb-4">No Templates Found</h3>
         <p className="text-muted-foreground mb-4">
-          Você ainda não submeteu nenhum template ao marketplace.
+          You haven't submitted any templates to the marketplace yet.
         </p>
         <Button onClick={() => {}}>
           <PlusIcon className="h-4 w-4 mr-2" />
-          Criar Primeiro Template
+          Create First Template
         </Button>
       </div>
     );
@@ -151,12 +151,12 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Categoria</TableHead>
-            <TableHead>Versão</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Version</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Instalações</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead>Installations</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -174,13 +174,13 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
               <TableCell>{template.installs}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="ghost" title="Ver Detalhes">
+                  <Button size="sm" variant="ghost" title="View Details">
                     <EyeIcon className="h-4 w-4" />
                   </Button>
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    title="Editar Template"
+                    title="Edit Template"
                     disabled={template.status === "published"}
                   >
                     <PencilIcon className="h-4 w-4" />
@@ -188,7 +188,7 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    title="Nova Versão"
+                    title="New Version"
                     onClick={() => handleNewVersion(template)}
                     disabled={template.status !== "published"}
                   >

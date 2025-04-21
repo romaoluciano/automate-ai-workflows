@@ -28,12 +28,19 @@ type MonthlyInstall = {
   installs: number;
 };
 
+type StatsData = {
+  totalTemplates: number;
+  totalInstalls: number;
+  totalEarnings: number;
+  monthlyInstalls: MonthlyInstall[];
+};
+
 export function PartnerStats({ partnerId }: StatProps) {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<StatsData>({
     totalTemplates: 0,
     totalInstalls: 0,
     totalEarnings: 0,
-    monthlyInstalls: [] as MonthlyInstall[],
+    monthlyInstalls: [],
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -45,7 +52,7 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Carrega total de templates
+        // Load total templates
         const { data: templatesData, error: templatesError } = await supabase
           .from("automation_templates")
           .select("id")
@@ -53,43 +60,43 @@ export function PartnerStats({ partnerId }: StatProps) {
           .eq("status", "published");
           
         if (templatesError) {
-          console.error("Erro ao carregar templates:", templatesError);
+          console.error("Error loading templates:", templatesError);
           throw templatesError;
         }
         
-        // Carrega total de instalações
+        // Load total installs
         let totalInstalls = 0;
         try {
-          // Using type assertion to avoid TypeScript error
+          // Using explicit typing and error handling
           const { data: installsData, error: installsError } = await supabase
-            .rpc("get_partner_total_installs", { partner_id: partnerId } as any);
+            .rpc("get_partner_total_installs", { partner_id: partnerId as string });
             
           if (installsError) {
-            console.error("Erro ao chamar RPC para instalações:", installsError);
+            console.error("Error calling RPC for installations:", installsError);
           } else if (installsData) {
-            // Check if installsData is an array and has at least one item
+            // Check if installsData is an array with items
             if (Array.isArray(installsData) && installsData.length > 0) {
-              // Type assertion for the first item to access count property safely
+              // Access count property safely with type assertion
               const firstItem = installsData[0] as any;
               totalInstalls = firstItem && typeof firstItem.count !== 'undefined' ? Number(firstItem.count) : 0;
             }
           }
         } catch (e) {
-          console.error("Erro ao chamar RPC:", e);
-          // Continua com totalInstalls = 0
+          console.error("Error calling RPC:", e);
+          // Continue with totalInstalls = 0
         }
         
-        // Carrega ganhos totais (esse seria um RPC customizado no backend)
-        // Simulando dados para o exemplo
-        const totalEarnings = 0; // Para implementar com sistema de pagamentos real
+        // Load total earnings (this would be a custom RPC in the backend)
+        // Simulating data for the example
+        const totalEarnings = 0; // To implement with real payment system
         
-        // Carrega dados de instalações mensais (simulados)
+        // Load monthly installation data (simulated)
         const monthlyData: MonthlyInstall[] = [
           { month: 'Jan', installs: 12 },
-          { month: 'Fev', installs: 19 },
+          { month: 'Feb', installs: 19 },
           { month: 'Mar', installs: 23 },
-          { month: 'Abr', installs: 17 },
-          { month: 'Mai', installs: 25 },
+          { month: 'Apr', installs: 17 },
+          { month: 'May', installs: 25 },
           { month: 'Jun', installs: 30 },
         ];
         
@@ -101,10 +108,10 @@ export function PartnerStats({ partnerId }: StatProps) {
         });
         
       } catch (error) {
-        console.error("Erro ao carregar estatísticas:", error);
+        console.error("Error loading statistics:", error);
         toast({
-          title: "Erro ao carregar estatísticas",
-          description: "Não foi possível carregar suas estatísticas.",
+          title: "Error loading statistics",
+          description: "Could not load your statistics.",
           variant: "destructive",
         });
       } finally {
@@ -129,28 +136,28 @@ export function PartnerStats({ partnerId }: StatProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl">{stats.totalTemplates}</CardTitle>
-            <CardDescription>Templates Publicados</CardDescription>
+            <CardDescription>Published Templates</CardDescription>
           </CardHeader>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl">{stats.totalInstalls}</CardTitle>
-            <CardDescription>Total de Instalações</CardDescription>
+            <CardDescription>Total Installations</CardDescription>
           </CardHeader>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl">R$ {stats.totalEarnings.toFixed(2)}</CardTitle>
-            <CardDescription>Ganhos Totais</CardDescription>
+            <CardDescription>Total Earnings</CardDescription>
           </CardHeader>
         </Card>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Instalações Mensais</CardTitle>
+          <CardTitle>Monthly Installations</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-80">
