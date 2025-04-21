@@ -53,7 +53,7 @@ export function TemplateDetailModal({ template, isOpen, onClose }: TemplateDetai
       
       try {
         setIsLoading(true);
-        // Usamos "as any" até que os tipos sejam atualizados
+        
         const { data, error } = await supabase
           .from("automation_templates_versions" as any)
           .select("version, released_at, changelog")
@@ -70,7 +70,8 @@ export function TemplateDetailModal({ template, isOpen, onClose }: TemplateDetai
             changelog: "Versão inicial"
           }]);
         } else {
-          setVersionHistory(data as TemplateVersionHistory[]);
+          // Use type assertion to fix the conversion error
+          setVersionHistory(data as unknown as TemplateVersionHistory[]);
         }
       } catch (error) {
         console.error("Erro ao carregar histórico de versões:", error);

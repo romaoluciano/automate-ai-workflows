@@ -57,15 +57,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       
       // Verificar se é parceiro
-      const { data: partnerData, error: partnerError } = await supabase
-        .from('partners')
-        .select('*')
-        .eq('user_id', authUser.id)
-        .single();
-        
-      if (!partnerError) {
-        setPartnerData(partnerData);
-      } else {
+      try {
+        const { data: partnerData, error: partnerError } = await supabase
+          .from('partners' as any)
+          .select('*')
+          .eq('user_id', authUser.id)
+          .single();
+          
+        if (!partnerError && partnerData) {
+          // Cast to Partner type to ensure it matches the expected structure
+          setPartnerData(partnerData as unknown as Partner);
+        } else {
+          setPartnerData(null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados de parceiro:", error);
         setPartnerData(null);
       }
     } catch (error) {

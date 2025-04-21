@@ -42,19 +42,20 @@ export function usePartnerApplicationForm() {
     }
 
     try {
-      // Como a tabela partner_applications não está nos tipos, usamos o "any" temporário
-      // até que possamos regenerar os tipos do Supabase
+      // Use an explicit type for the insert data to ensure type safety
+      const insertData = {
+        user_id: user.id,
+        company_name: values.company_name,
+        tax_id: values.tax_id,
+        website: values.website,
+        experience: values.experience,
+        portfolio: values.portfolio || null,
+        status: "pending",
+      };
+
       const { error } = await supabase
         .from("partner_applications" as any)
-        .insert({
-          user_id: user.id,
-          company_name: values.company_name,
-          tax_id: values.tax_id,
-          website: values.website,
-          experience: values.experience,
-          portfolio: values.portfolio || null,
-          status: "pending",
-        });
+        .insert(insertData);
 
       if (error) throw error;
 

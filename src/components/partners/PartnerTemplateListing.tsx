@@ -63,10 +63,20 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
         
         if (data) {
           // Adicionar um valor simulado para installs por enquanto
-          const formattedTemplates = data.map(template => ({
-            ...template,
-            installs: Math.floor(Math.random() * 100) // valor simulado para demonstração
-          }));
+          const formattedTemplates = data.map(template => {
+            // Create a properly typed object instead of using spread on potentially undefined data
+            return {
+              id: template.id,
+              name: template.name,
+              description: template.description || "",
+              category: template.category,
+              is_premium: template.is_premium || false,
+              status: template.status || "draft",
+              version: template.version || "1.0.0",
+              created_at: template.created_at || new Date().toISOString(),
+              installs: Math.floor(Math.random() * 100) // valor simulado para demonstração
+            };
+          });
           
           setTemplates(formattedTemplates);
         } else {

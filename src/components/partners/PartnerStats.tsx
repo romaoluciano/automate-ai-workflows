@@ -49,15 +49,15 @@ export function PartnerStats({ partnerId }: StatProps) {
           
         if (templatesError) throw templatesError;
         
-        // Carrega total de instalações - usando executeRaw para chamar uma função RPC
-        // que pode não existir ainda nos tipos
+        // Carrega total de instalações
         let totalInstalls = 0;
         try {
           const { data: installsData, error: installsError } = await supabase
             .rpc("get_partner_total_installs", { partner_id: partnerId } as any);
             
-          if (!installsError && installsData) {
-            totalInstalls = installsData[0]?.count || 0;
+          if (!installsError && installsData && Array.isArray(installsData) && installsData.length > 0) {
+            const firstItem = installsData[0] as any;
+            totalInstalls = firstItem && typeof firstItem.count !== 'undefined' ? Number(firstItem.count) : 0;
           }
         } catch (e) {
           console.error("Erro ao chamar RPC:", e);
