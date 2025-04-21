@@ -53,8 +53,9 @@ export function TemplateDetailModal({ template, isOpen, onClose }: TemplateDetai
       
       try {
         setIsLoading(true);
+        // Usamos "as any" até que os tipos sejam atualizados
         const { data, error } = await supabase
-          .from("automation_templates_versions")
+          .from("automation_templates_versions" as any)
           .select("version, released_at, changelog")
           .eq("template_id", template.id)
           .order("released_at", { ascending: false });
@@ -62,17 +63,18 @@ export function TemplateDetailModal({ template, isOpen, onClose }: TemplateDetai
         if (error) throw error;
         
         // Se não houver histórico, criar uma entrada com a versão atual
-        if (data.length === 0 && template.version) {
+        if (!data || data.length === 0 && template.version) {
           setVersionHistory([{
             version: template.version,
             released_at: new Date().toISOString(),
             changelog: "Versão inicial"
           }]);
         } else {
-          setVersionHistory(data);
+          setVersionHistory(data as TemplateVersionHistory[]);
         }
       } catch (error) {
         console.error("Erro ao carregar histórico de versões:", error);
+        setVersionHistory([]);
       } finally {
         setIsLoading(false);
       }
@@ -122,8 +124,9 @@ export function TemplateDetailModal({ template, isOpen, onClose }: TemplateDetai
       if (error) throw error;
       
       // Registrar a instalação do template
+      // Usamos "as any" até que os tipos sejam atualizados
       await supabase
-        .from("template_installs")
+        .from("template_installs" as any)
         .insert({
           template_id: template.id,
           user_id: user.id,

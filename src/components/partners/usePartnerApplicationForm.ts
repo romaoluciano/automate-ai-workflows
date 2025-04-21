@@ -42,8 +42,10 @@ export function usePartnerApplicationForm() {
     }
 
     try {
+      // Como a tabela partner_applications não está nos tipos, usamos o "any" temporário
+      // até que possamos regenerar os tipos do Supabase
       const { error } = await supabase
-        .from("partner_applications")
+        .from("partner_applications" as any)
         .insert({
           user_id: user.id,
           company_name: values.company_name,

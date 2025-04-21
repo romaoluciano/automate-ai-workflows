@@ -87,8 +87,9 @@ export function TemplateVersionModal({ isOpen, onClose, template }: TemplateVers
       if (fetchError) throw fetchError;
       
       // Criamos uma cópia com nova versão
+      // Use "as any" até que os tipos sejam atualizados
       const { error: insertError } = await supabase
-        .from("automation_templates_versions")
+        .from("automation_templates_versions" as any)
         .insert({
           template_id: template.id,
           version: values.version,

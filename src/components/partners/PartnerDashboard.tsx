@@ -20,14 +20,17 @@ export function PartnerDashboard() {
   useEffect(() => {
     async function loadCategories() {
       try {
+        // Usamos "as any" até que os tipos sejam atualizados
         const { data, error } = await supabase
-          .from("template_categories")
+          .from("template_categories" as any)
           .select("name")
           .order("name");
           
         if (error) throw error;
         
-        setCategories(data.map(cat => cat.name));
+        if (data) {
+          setCategories(data.map((cat: any) => cat.name));
+        }
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
         toast({
