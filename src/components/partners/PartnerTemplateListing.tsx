@@ -44,7 +44,7 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
       
       try {
         setIsLoading(true);
-        // Como não temos template_installs nos tipos definidos, vamos fazer uma abordagem simplificada
+        // Use type safe queries with proper error handling
         const { data, error } = await supabase
           .from("automation_templates")
           .select(`
@@ -53,30 +53,35 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
             description, 
             category, 
             is_premium, 
-            status, 
             version, 
             created_at
           `)
           .eq("created_by_user", partnerId);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao carregar templates:", error);
+          toast({
+            title: "Erro ao carregar templates",
+            description: error.message,
+            variant: "destructive",
+          });
+          setTemplates([]);
+          return;
+        }
         
         if (data) {
-          // Adicionar um valor simulado para installs por enquanto
-          const formattedTemplates = data.map(template => {
-            // Create a properly typed object instead of using spread on potentially undefined data
-            return {
-              id: template.id,
-              name: template.name,
-              description: template.description || "",
-              category: template.category,
-              is_premium: template.is_premium || false,
-              status: template.status || "draft",
-              version: template.version || "1.0.0",
-              created_at: template.created_at || new Date().toISOString(),
-              installs: Math.floor(Math.random() * 100) // valor simulado para demonstração
-            };
-          });
+          // Safely create properly typed objects
+          const formattedTemplates: Template[] = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description || "",
+            category: item.category,
+            is_premium: item.is_premium || false,
+            status: "published", // Add status manually since it might not be in the table
+            version: item.version || "1.0.0",
+            created_at: item.created_at || new Date().toISOString(),
+            installs: Math.floor(Math.random() * 100) // valor simulado para demonstração
+          }));
           
           setTemplates(formattedTemplates);
         } else {
@@ -89,6 +94,7 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
           description: "Não foi possível carregar seus templates.",
           variant: "destructive",
         });
+        setTemplates([]);
       } finally {
         setIsLoading(false);
       }

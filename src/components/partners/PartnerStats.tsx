@@ -23,12 +23,17 @@ interface StatProps {
   partnerId: string | undefined;
 }
 
+type MonthlyInstall = {
+  month: string;
+  installs: number;
+};
+
 export function PartnerStats({ partnerId }: StatProps) {
   const [stats, setStats] = useState({
     totalTemplates: 0,
     totalInstalls: 0,
     totalEarnings: 0,
-    monthlyInstalls: [] as any[],
+    monthlyInstalls: [] as MonthlyInstall[],
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -47,17 +52,27 @@ export function PartnerStats({ partnerId }: StatProps) {
           .eq("created_by_user", partnerId)
           .eq("status", "published");
           
-        if (templatesError) throw templatesError;
+        if (templatesError) {
+          console.error("Erro ao carregar templates:", templatesError);
+          throw templatesError;
+        }
         
         // Carrega total de instalações
         let totalInstalls = 0;
         try {
+          // Using type assertion to avoid TypeScript error
           const { data: installsData, error: installsError } = await supabase
             .rpc("get_partner_total_installs", { partner_id: partnerId } as any);
             
-          if (!installsError && installsData && Array.isArray(installsData) && installsData.length > 0) {
-            const firstItem = installsData[0] as any;
-            totalInstalls = firstItem && typeof firstItem.count !== 'undefined' ? Number(firstItem.count) : 0;
+          if (installsError) {
+            console.error("Erro ao chamar RPC para instalações:", installsError);
+          } else if (installsData) {
+            // Check if installsData is an array and has at least one item
+            if (Array.isArray(installsData) && installsData.length > 0) {
+              // Type assertion for the first item to access count property safely
+              const firstItem = installsData[0] as any;
+              totalInstalls = firstItem && typeof firstItem.count !== 'undefined' ? Number(firstItem.count) : 0;
+            }
           }
         } catch (e) {
           console.error("Erro ao chamar RPC:", e);
@@ -69,7 +84,7 @@ export function PartnerStats({ partnerId }: StatProps) {
         const totalEarnings = 0; // Para implementar com sistema de pagamentos real
         
         // Carrega dados de instalações mensais (simulados)
-        const monthlyData = [
+        const monthlyData: MonthlyInstall[] = [
           { month: 'Jan', installs: 12 },
           { month: 'Fev', installs: 19 },
           { month: 'Mar', installs: 23 },
