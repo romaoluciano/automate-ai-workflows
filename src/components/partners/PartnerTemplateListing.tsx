@@ -45,7 +45,7 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
       try {
         setIsLoading(true);
         
-        // Use type safe queries with proper error handling
+        // Fetch templates created by the partner
         const { data, error } = await supabase
           .from("automation_templates")
           .select(`
@@ -70,20 +70,25 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
         }
         
         if (data) {
-          // Safely create properly typed objects
-          const formattedTemplates: Template[] = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            description: item.description || "",
-            category: item.category,
-            is_premium: item.is_premium || false,
-            status: "published", // Add status manually since it might not be in the table
-            version: "1.0.0",    // Add version manually since it might not be in the table
-            created_at: item.created_at || new Date().toISOString(),
-            installs: Math.floor(Math.random() * 100) // simulated value for demonstration
+          // Fetch the latest version for each template
+          const templatesWithVersions = await Promise.all(data.map(async (template) => {
+            const { data: versionData, error: versionError } = await supabase
+              .from("automation_templates_versions")
+              .select("version, status")
+              .eq("template_id", template.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .single();
+            
+            return {
+              ...template,
+              version: versionData?.version || "1.0.0",
+              status: versionData?.status || "draft",
+              installs: Math.floor(Math.random() * 100) // Simulated value
+            };
           }));
           
-          setTemplates(formattedTemplates);
+          setTemplates(templatesWithVersions);
         } else {
           setTemplates([]);
         }
@@ -209,3 +214,4 @@ export function PartnerTemplateListing({ partnerId }: PartnerTemplateListingProp
     </div>
   );
 }
+

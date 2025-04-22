@@ -91,6 +91,50 @@ export type Database = {
           },
         ]
       }
+      automation_templates_versions: {
+        Row: {
+          changelog: string | null
+          created_at: string
+          created_by_user: string | null
+          id: string
+          json_schema: Json
+          previous_version: string | null
+          status: string | null
+          template_id: string | null
+          version: string
+        }
+        Insert: {
+          changelog?: string | null
+          created_at?: string
+          created_by_user?: string | null
+          id?: string
+          json_schema: Json
+          previous_version?: string | null
+          status?: string | null
+          template_id?: string | null
+          version: string
+        }
+        Update: {
+          changelog?: string | null
+          created_at?: string
+          created_by_user?: string | null
+          id?: string
+          json_schema?: Json
+          previous_version?: string | null
+          status?: string | null
+          template_id?: string | null
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_templates_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "automation_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automations: {
         Row: {
           created_at: string | null
@@ -211,6 +255,33 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          approved_at: string | null
+          company_name: string
+          created_at: string
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          company_name: string
+          created_at?: string
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          company_name?: string
+          created_at?: string
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           automations_limit: number | null
@@ -295,6 +366,24 @@ export type Database = {
           },
         ]
       }
+      template_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -330,7 +419,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_partner_total_installs: {
+        Args: { partner_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

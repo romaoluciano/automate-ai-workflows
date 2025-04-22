@@ -36,9 +36,9 @@ type StatsData = {
 };
 
 // Define explicit type for the RPC response
-interface InstallCountResponse {
+type InstallCountResponse = {
   count: number;
-}
+} | null;
 
 export function PartnerStats({ partnerId }: StatProps) {
   const [stats, setStats] = useState<StatsData>({
@@ -57,7 +57,6 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Type the response explicitly to avoid deep instantiation issues
         const templatesResponse = await supabase
           .from("automation_templates")
           .select("id")
@@ -74,26 +73,16 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
-          // Use a safer approach for the RPC call
-          const { data: rpcData, error: rpcError } = await supabase.rpc(
+          const { data, error } = await supabase.rpc(
             'get_partner_total_installs',
             { partner_id: partnerId }
           );
           
-          if (rpcError) {
-            console.error("Error calling RPC for installations:", rpcError);
-          } else if (rpcData) {
-            // Handle different possible response formats safely
-            if (Array.isArray(rpcData) && rpcData.length > 0) {
-              const firstItem = rpcData[0];
-              if (firstItem && 'count' in firstItem) {
-                totalInstalls = Number(firstItem.count);
-              }
-            } else if (typeof rpcData === 'object' && rpcData !== null) {
-              if ('count' in rpcData) {
-                totalInstalls = Number(rpcData.count);
-              }
-            }
+          if (error) {
+            console.error("Error calling RPC for installations:", error);
+          } else if (data) {
+            // Safely handle the RPC response
+            totalInstalls = Number(data) || 0;
           }
         } catch (e) {
           console.error("Error calling RPC:", e);
@@ -187,3 +176,4 @@ export function PartnerStats({ partnerId }: StatProps) {
     </div>
   );
 }
+
