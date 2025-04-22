@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +34,6 @@ type StatsData = {
   monthlyInstalls: MonthlyInstall[];
 };
 
-// Simple interface for the RPC response with no complex generics
 interface InstallCountResponse {
   count: number;
 }
@@ -57,9 +55,8 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Load total templates
         const { data: templatesData, error: templatesError } = await supabase
-          .from("automation_templates")
+          .from<{ id: string }>("automation_templates")
           .select("id")
           .eq("created_by_user", partnerId)
           .eq("status", "published");
@@ -69,36 +66,29 @@ export function PartnerStats({ partnerId }: StatProps) {
           throw templatesError;
         }
         
-        // Load total installs
         let totalInstalls = 0;
-        
+
         try {
-          // Explicitly define parameters and avoid type instantiation issues
           const { data, error: installsError } = await supabase
-            .rpc('get_partner_total_installs', { 
-              partner_id: partnerId 
+            .rpc<InstallCountResponse[]>("get_partner_total_installs", {
+              partner_id: partnerId
             });
-            
+
           if (installsError) {
             console.error("Error calling RPC for installations:", installsError);
           } else if (data) {
-            // Handle different possible response formats safely
             if (Array.isArray(data) && data.length > 0) {
               if ('count' in data[0]) {
                 totalInstalls = Number(data[0].count);
               }
-            } else if (data && typeof data === 'object' && data !== null) {
-              if ('count' in data) {
-                totalInstalls = Number(data.count);
-              }
+            } else if (typeof data === 'object' && data !== null && 'count' in data) {
+              totalInstalls = Number((data as InstallCountResponse).count);
             }
           }
         } catch (e) {
           console.error("Error calling RPC:", e);
-          // Continue with totalInstalls = 0
         }
         
-        // Load monthly installation data (simulated)
         const monthlyData: MonthlyInstall[] = [
           { month: 'Jan', installs: 12 },
           { month: 'Feb', installs: 19 },
@@ -110,8 +100,8 @@ export function PartnerStats({ partnerId }: StatProps) {
         
         setStats({
           totalTemplates: templatesData ? templatesData.length : 0,
-          totalInstalls: totalInstalls,
-          totalEarnings: 0, // To implement with real payment system
+          totalInstalls,
+          totalEarnings: 0,
           monthlyInstalls: monthlyData,
         });
         
