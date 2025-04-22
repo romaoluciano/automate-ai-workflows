@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,7 @@ type StatsData = {
   monthlyInstalls: MonthlyInstall[];
 };
 
+// Define explicit type for the RPC response
 interface InstallCountResponse {
   count: number;
 }
@@ -55,12 +57,12 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Forçar o cast direto do resultado da query para evitar erro de instanciamento profundo
+        // Type the response explicitly to avoid deep instantiation issues
         const templatesResponse = await supabase
           .from("automation_templates")
           .select("id")
           .eq("created_by_user", partnerId)
-          .eq("status", "published") as any;
+          .eq("status", "published");
         
         if (templatesResponse.error) {
           console.error("Error loading templates:", templatesResponse.error);
@@ -72,21 +74,24 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
-          // Forçar cast genérico para evitar erro do tipo 'never'
-          const rpcResponse = await supabase
-            .rpc("get_partner_total_installs", { partner_id: partnerId }) as any;
+          // Use a safer approach for the RPC call
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'get_partner_total_installs',
+            { partner_id: partnerId }
+          );
           
-          if (rpcResponse.error) {
-            console.error("Error calling RPC for installations:", rpcResponse.error);
-          } else if (rpcResponse.data) {
-            if (Array.isArray(rpcResponse.data) && rpcResponse.data.length > 0) {
-              const firstItem = rpcResponse.data[0];
+          if (rpcError) {
+            console.error("Error calling RPC for installations:", rpcError);
+          } else if (rpcData) {
+            // Handle different possible response formats safely
+            if (Array.isArray(rpcData) && rpcData.length > 0) {
+              const firstItem = rpcData[0];
               if (firstItem && 'count' in firstItem) {
                 totalInstalls = Number(firstItem.count);
               }
-            } else if (typeof rpcResponse.data === 'object' && rpcResponse.data !== null) {
-              if ('count' in rpcResponse.data) {
-                totalInstalls = Number(rpcResponse.data.count);
+            } else if (typeof rpcData === 'object' && rpcData !== null) {
+              if ('count' in rpcData) {
+                totalInstalls = Number(rpcData.count);
               }
             }
           }
