@@ -56,46 +56,47 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Fix type instantiation issues with a more generic approach
-        const templatesResponse = await supabase
+        // Work around type instantiation issues by circumventing type checking
+        // We use any as a temporary escape hatch, but handle error cases explicitly
+        const templatesQuery = supabase
           .from("automation_templates")
           .select("id")
           .eq("created_by_user", partnerId)
           .eq("status", "published");
           
-        const templatesData = templatesResponse.data as Array<{id: string}> | null;
-        const templatesError = templatesResponse.error;
-          
-        if (templatesError) {
-          console.error("Error loading templates:", templatesError);
-          throw templatesError;
+        // Force TypeScript to accept this query without deep type checking
+        const templatesResponse = await (templatesQuery as any);
+        
+        if (templatesResponse.error) {
+          console.error("Error loading templates:", templatesResponse.error);
+          throw templatesResponse.error;
         }
+        
+        const templatesCount = templatesResponse.data?.length || 0;
         
         let totalInstalls = 0;
 
         try {
-          // Use more generic typing to avoid the deep instantiation issue
-          const rpcResponse = await supabase.rpc(
+          // Cast the entire RPC call to any to avoid deep type instantiation
+          const rpcCall = supabase.rpc(
             "get_partner_total_installs", 
-            { partner_id: partnerId }
+            { partner_id: partnerId as string }
           );
           
-          const data = rpcResponse.data;
-          const installsError = rpcResponse.error;
-
-          if (installsError) {
-            console.error("Error calling RPC for installations:", installsError);
-          } else if (data) {
+          const rpcResponse = await (rpcCall as any);
+          
+          if (rpcResponse.error) {
+            console.error("Error calling RPC for installations:", rpcResponse.error);
+          } else if (rpcResponse.data) {
             // Safely handle the response with proper type checking
-            if (Array.isArray(data) && data.length > 0) {
-              const firstItem = data[0] as any;
+            if (Array.isArray(rpcResponse.data) && rpcResponse.data.length > 0) {
+              const firstItem = rpcResponse.data[0];
               if (firstItem && 'count' in firstItem) {
                 totalInstalls = Number(firstItem.count);
               }
-            } else if (typeof data === 'object' && data !== null) {
-              const responseData = data as any;
-              if ('count' in responseData) {
-                totalInstalls = Number(responseData.count);
+            } else if (typeof rpcResponse.data === 'object' && rpcResponse.data !== null) {
+              if ('count' in rpcResponse.data) {
+                totalInstalls = Number(rpcResponse.data.count);
               }
             }
           }
@@ -113,7 +114,7 @@ export function PartnerStats({ partnerId }: StatProps) {
         ];
         
         setStats({
-          totalTemplates: templatesData ? templatesData.length : 0,
+          totalTemplates: templatesCount,
           totalInstalls,
           totalEarnings: 0,
           monthlyInstalls: monthlyData,
