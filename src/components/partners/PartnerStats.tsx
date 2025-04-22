@@ -64,31 +64,26 @@ export function PartnerStats({ partnerId }: StatProps) {
           throw templatesError;
         }
         
-        // Load total installs
+        // Load total installs - using explicit type for installsData 
         let totalInstalls = 0;
+        
         try {
-          // Using explicit typing and error handling
           const { data: installsData, error: installsError } = await supabase
-            .rpc("get_partner_total_installs", { partner_id: partnerId as string });
+            .rpc("get_partner_total_installs", { partner_id: partnerId });
             
           if (installsError) {
             console.error("Error calling RPC for installations:", installsError);
           } else if (installsData) {
-            // Check if installsData is an array with items
+            // Safely handle data with type assertions
             if (Array.isArray(installsData) && installsData.length > 0) {
-              // Access count property safely with type assertion
-              const firstItem = installsData[0] as any;
-              totalInstalls = firstItem && typeof firstItem.count !== 'undefined' ? Number(firstItem.count) : 0;
+              const item = installsData[0] as { count?: number };
+              totalInstalls = item && typeof item.count === 'number' ? item.count : 0;
             }
           }
         } catch (e) {
           console.error("Error calling RPC:", e);
           // Continue with totalInstalls = 0
         }
-        
-        // Load total earnings (this would be a custom RPC in the backend)
-        // Simulating data for the example
-        const totalEarnings = 0; // To implement with real payment system
         
         // Load monthly installation data (simulated)
         const monthlyData: MonthlyInstall[] = [
@@ -101,9 +96,9 @@ export function PartnerStats({ partnerId }: StatProps) {
         ];
         
         setStats({
-          totalTemplates: templatesData?.length || 0,
+          totalTemplates: templatesData ? templatesData.length : 0,
           totalInstalls: totalInstalls,
-          totalEarnings: totalEarnings,
+          totalEarnings: 0, // To implement with real payment system
           monthlyInstalls: monthlyData,
         });
         
