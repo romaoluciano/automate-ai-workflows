@@ -56,9 +56,9 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Using proper typing for Supabase query
+        // Using "as any" until type issues are resolved
         const { data: templatesData, error: templatesError } = await supabase
-          .from("automation_templates")
+          .from("automation_templates" as any)
           .select("id")
           .eq("created_by_user", partnerId)
           .eq("status", "published");
@@ -71,9 +71,9 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
-          // Fixed RPC typing
+          // Using "as any" for RPC to avoid type instantiation issues
           const { data, error: installsError } = await supabase
-            .rpc("get_partner_total_installs", {
+            .rpc("get_partner_total_installs" as any, {
               partner_id: partnerId
             });
 
@@ -107,7 +107,7 @@ export function PartnerStats({ partnerId }: StatProps) {
         ];
         
         setStats({
-          totalTemplates: templatesData ? templatesData.length : 0,
+          totalTemplates: templatesData ? (templatesData as any[]).length : 0,
           totalInstalls,
           totalEarnings: 0,
           monthlyInstalls: monthlyData,
