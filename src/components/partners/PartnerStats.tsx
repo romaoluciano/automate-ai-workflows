@@ -56,12 +56,15 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Using "as any" until type issues are resolved
+        // Fix type instantiation issues by using type assertion
         const { data: templatesData, error: templatesError } = await supabase
-          .from("automation_templates" as any)
+          .from("automation_templates")
           .select("id")
           .eq("created_by_user", partnerId)
-          .eq("status", "published");
+          .eq("status", "published") as unknown as { 
+            data: Array<{id: string}> | null; 
+            error: any;
+          };
           
         if (templatesError) {
           console.error("Error loading templates:", templatesError);
@@ -71,11 +74,14 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
-          // Using "as any" for RPC to avoid type instantiation issues
+          // Fix RPC typing with proper type assertion
           const { data, error: installsError } = await supabase
-            .rpc("get_partner_total_installs" as any, {
+            .rpc("get_partner_total_installs", {
               partner_id: partnerId
-            });
+            }) as unknown as {
+              data: any;
+              error: any;
+            };
 
           if (installsError) {
             console.error("Error calling RPC for installations:", installsError);
@@ -107,7 +113,7 @@ export function PartnerStats({ partnerId }: StatProps) {
         ];
         
         setStats({
-          totalTemplates: templatesData ? (templatesData as any[]).length : 0,
+          totalTemplates: templatesData ? templatesData.length : 0,
           totalInstalls,
           totalEarnings: 0,
           monthlyInstalls: monthlyData,
