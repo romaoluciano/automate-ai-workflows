@@ -73,7 +73,7 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
         
         try {
-          // Using explicit typing for the RPC call and response
+          // Using explicit casting for the RPC response
           const { data, error: installsError } = await supabase
             .rpc('get_partner_total_installs', { 
               partner_id: partnerId 
