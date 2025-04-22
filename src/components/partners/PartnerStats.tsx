@@ -35,11 +35,6 @@ type StatsData = {
   monthlyInstalls: MonthlyInstall[];
 };
 
-// Define explicit type for the RPC response
-type InstallCountResponse = {
-  count: number;
-} | null;
-
 export function PartnerStats({ partnerId }: StatProps) {
   const [stats, setStats] = useState<StatsData>({
     totalTemplates: 0,
@@ -73,16 +68,17 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
-          const { data, error } = await supabase.rpc(
-            'get_partner_total_installs',
-            { partner_id: partnerId }
-          );
+          // Especificando explicitamente o tipo de retorno como any para evitar o erro de profundidade excessiva
+          const { data, error } = await supabase.rpc('get_partner_total_installs', {
+            partner_id: partnerId
+          });
           
           if (error) {
             console.error("Error calling RPC for installations:", error);
-          } else if (data) {
-            // Safely handle the RPC response
-            totalInstalls = Number(data) || 0;
+          } else if (data !== null) {
+            // Tratamento seguro do dado retornado
+            totalInstalls = typeof data === 'number' ? data : 
+                           (data && typeof data.count === 'number') ? data.count : 0;
           }
         } catch (e) {
           console.error("Error calling RPC:", e);
@@ -100,7 +96,7 @@ export function PartnerStats({ partnerId }: StatProps) {
         setStats({
           totalTemplates: templatesCount,
           totalInstalls,
-          totalEarnings: 0,
+          totalEarnings: 0, // Aqui você poderia implementar um cálculo real de ganhos
           monthlyInstalls: monthlyData,
         });
         
@@ -176,4 +172,3 @@ export function PartnerStats({ partnerId }: StatProps) {
     </div>
   );
 }
-
