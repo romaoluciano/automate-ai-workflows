@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,16 +55,12 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Work around type instantiation issues by circumventing type checking
-        // We use any as a temporary escape hatch, but handle error cases explicitly
-        const templatesQuery = supabase
+        // Forçar o cast direto do resultado da query para evitar erro de instanciamento profundo
+        const templatesResponse = await supabase
           .from("automation_templates")
           .select("id")
           .eq("created_by_user", partnerId)
-          .eq("status", "published");
-          
-        // Force TypeScript to accept this query without deep type checking
-        const templatesResponse = await (templatesQuery as any);
+          .eq("status", "published") as any;
         
         if (templatesResponse.error) {
           console.error("Error loading templates:", templatesResponse.error);
@@ -77,18 +72,13 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
-          // Cast the entire RPC call to any to avoid deep type instantiation
-          const rpcCall = supabase.rpc(
-            "get_partner_total_installs", 
-            { partner_id: partnerId as string }
-          );
-          
-          const rpcResponse = await (rpcCall as any);
+          // Forçar cast genérico para evitar erro do tipo 'never'
+          const rpcResponse = await supabase
+            .rpc("get_partner_total_installs", { partner_id: partnerId }) as any;
           
           if (rpcResponse.error) {
             console.error("Error calling RPC for installations:", rpcResponse.error);
           } else if (rpcResponse.data) {
-            // Safely handle the response with proper type checking
             if (Array.isArray(rpcResponse.data) && rpcResponse.data.length > 0) {
               const firstItem = rpcResponse.data[0];
               if (firstItem && 'count' in firstItem) {
