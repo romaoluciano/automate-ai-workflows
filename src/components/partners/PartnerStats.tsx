@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,8 +56,9 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
+        // Using proper typing for Supabase query
         const { data: templatesData, error: templatesError } = await supabase
-          .from<{ id: string }>("automation_templates")
+          .from("automation_templates")
           .select("id")
           .eq("created_by_user", partnerId)
           .eq("status", "published");
@@ -69,20 +71,26 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
+          // Fixed RPC typing
           const { data, error: installsError } = await supabase
-            .rpc<InstallCountResponse[]>("get_partner_total_installs", {
+            .rpc("get_partner_total_installs", {
               partner_id: partnerId
             });
 
           if (installsError) {
             console.error("Error calling RPC for installations:", installsError);
           } else if (data) {
+            // Safely handle the response with proper type checking
             if (Array.isArray(data) && data.length > 0) {
-              if ('count' in data[0]) {
-                totalInstalls = Number(data[0].count);
+              const firstItem = data[0] as any;
+              if (firstItem && 'count' in firstItem) {
+                totalInstalls = Number(firstItem.count);
               }
-            } else if (typeof data === 'object' && data !== null && 'count' in data) {
-              totalInstalls = Number((data as InstallCountResponse).count);
+            } else if (typeof data === 'object' && data !== null) {
+              const responseData = data as any;
+              if ('count' in responseData) {
+                totalInstalls = Number(responseData.count);
+              }
             }
           }
         } catch (e) {
