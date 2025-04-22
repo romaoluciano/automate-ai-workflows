@@ -35,8 +35,8 @@ type StatsData = {
   monthlyInstalls: MonthlyInstall[];
 };
 
-// Define a simple interface for the RPC response
-interface InstallCountResult {
+// Simple interface for the RPC response with no complex generics
+interface InstallCountResponse {
   count: number;
 }
 
@@ -73,7 +73,7 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
         
         try {
-          // Using a simple approach without complex type instantiation
+          // Explicitly define parameters and avoid type instantiation issues
           const { data, error: installsError } = await supabase
             .rpc('get_partner_total_installs', { 
               partner_id: partnerId 
@@ -82,11 +82,15 @@ export function PartnerStats({ partnerId }: StatProps) {
           if (installsError) {
             console.error("Error calling RPC for installations:", installsError);
           } else if (data) {
-            // Safely access data using type checks
-            if (Array.isArray(data) && data.length > 0 && 'count' in data[0]) {
-              totalInstalls = data[0].count;
-            } else if (typeof data === 'object' && data !== null && 'count' in data) {
-              totalInstalls = data.count;
+            // Handle different possible response formats safely
+            if (Array.isArray(data) && data.length > 0) {
+              if ('count' in data[0]) {
+                totalInstalls = Number(data[0].count);
+              }
+            } else if (data && typeof data === 'object' && data !== null) {
+              if ('count' in data) {
+                totalInstalls = Number(data.count);
+              }
             }
           }
         } catch (e) {
