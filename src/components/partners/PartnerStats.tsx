@@ -35,10 +35,10 @@ type StatsData = {
   monthlyInstalls: MonthlyInstall[];
 };
 
-// Type for RPC response
-type InstallCountResponse = {
+// Define the expected structure of the RPC response
+interface InstallCountResult {
   count: number;
-}[];
+}
 
 export function PartnerStats({ partnerId }: StatProps) {
   const [stats, setStats] = useState<StatsData>({
@@ -69,21 +69,24 @@ export function PartnerStats({ partnerId }: StatProps) {
           throw templatesError;
         }
         
-        // Load total installs with proper typing
+        // Load total installs
         let totalInstalls = 0;
         
         try {
-          // Explicitly typing the RPC response
+          // Using explicit typing for the RPC call and response
           const { data, error: installsError } = await supabase
-            .rpc<InstallCountResponse>("get_partner_total_installs", { 
+            .rpc('get_partner_total_installs', { 
               partner_id: partnerId 
             });
             
           if (installsError) {
             console.error("Error calling RPC for installations:", installsError);
-          } else if (data && Array.isArray(data) && data.length > 0) {
-            // Safely access the count property
-            totalInstalls = data[0]?.count || 0;
+          } else if (data) {
+            // Safe access to the count property
+            // Assuming the RPC returns an array with a single object that has a count property
+            totalInstalls = Array.isArray(data) && data.length > 0 && typeof data[0]?.count === 'number' 
+              ? data[0].count 
+              : 0;
           }
         } catch (e) {
           console.error("Error calling RPC:", e);
