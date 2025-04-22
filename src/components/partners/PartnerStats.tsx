@@ -56,15 +56,15 @@ export function PartnerStats({ partnerId }: StatProps) {
       try {
         setIsLoading(true);
         
-        // Fix type instantiation issues by using type assertion
-        const { data: templatesData, error: templatesError } = await supabase
+        // Fix type instantiation issues with a more generic approach
+        const templatesResponse = await supabase
           .from("automation_templates")
           .select("id")
           .eq("created_by_user", partnerId)
-          .eq("status", "published") as unknown as { 
-            data: Array<{id: string}> | null; 
-            error: any;
-          };
+          .eq("status", "published");
+          
+        const templatesData = templatesResponse.data as Array<{id: string}> | null;
+        const templatesError = templatesResponse.error;
           
         if (templatesError) {
           console.error("Error loading templates:", templatesError);
@@ -74,14 +74,14 @@ export function PartnerStats({ partnerId }: StatProps) {
         let totalInstalls = 0;
 
         try {
-          // Fix RPC typing with proper type assertion
-          const { data, error: installsError } = await supabase
-            .rpc("get_partner_total_installs", {
-              partner_id: partnerId
-            }) as unknown as {
-              data: any;
-              error: any;
-            };
+          // Use more generic typing to avoid the deep instantiation issue
+          const rpcResponse = await supabase.rpc(
+            "get_partner_total_installs", 
+            { partner_id: partnerId }
+          );
+          
+          const data = rpcResponse.data;
+          const installsError = rpcResponse.error;
 
           if (installsError) {
             console.error("Error calling RPC for installations:", installsError);
